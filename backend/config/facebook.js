@@ -8,35 +8,42 @@ const logger = require('../utils/logger');
 
 const sanitize = (val) => {
   if (!val) return '';
-  return val.toString().trim().replace(/^["']|["']$/g, '').trim();
+  return val.toString().trim().replace(/^["'\[\]()]+|["'\[\]()]+$/g, '').trim();
 };
 
 const getGraphApiVersion = () => {
-  let v = sanitize(process.env.FB_GRAPH_API_VERSION);
-  if (!v) return 'v18.0';
-  if (!v.startsWith('v')) v = `v${v}`;
-  return v.replace(/[^a-zA-Z0-9.]/g, '');
+  const raw = (process.env.FB_GRAPH_API_VERSION || '').toString();
+  const match = raw.match(/v?[0-9]+(?:\.[0-9]+)?/);
+  if (match) {
+    const v = match[0];
+    return v.startsWith('v') ? v : `v${v}`;
+  }
+  return 'v18.0';
 };
 
 const getBaseUrl = () => {
-  let url = sanitize(process.env.FB_GRAPH_BASE_URL);
-  if (!url || !url.startsWith('http')) {
-    if (url && (url.includes('graph.facebook.com') || url.includes('facebook.com'))) {
-      url = `https://${url.replace(/^\/+/, '')}`;
-    } else {
-      url = 'https://graph.facebook.com';
-    }
+  const raw = (process.env.FB_GRAPH_BASE_URL || '').toString();
+  // Extract clean URL even if user pasted a markdown link like [https://...](https://...) or quoted string
+  const match = raw.match(/https?:\/\/[a-zA-Z0-9.\-_]+/);
+  if (match) {
+    return match[0].replace(/\/+$/, '');
   }
-  return url.replace(/\/+$/, '');
+  return 'https://graph.facebook.com';
 };
 
 const getPageId = () => {
-  const pid = sanitize(process.env.FB_PAGE_ID);
-  const cleanId = pid.replace(/[^0-9]/g, '');
-  return cleanId || '1469331552924612';
+  const pid = (process.env.FB_PAGE_ID || '').toString();
+  const match = pid.match(/[0-9]{8,}/);
+  if (match) {
+    return match[0];
+  }
+  return '1469331552924612';
 };
 
-const getAccessToken = () => sanitize(process.env.FB_PAGE_ACCESS_TOKEN);
+const getAccessToken = () => {
+  const raw = (process.env.FB_PAGE_ACCESS_TOKEN || '').toString();
+  return sanitize(raw);
+};
 
 const isFacebookConfigured = () => {
   const token = getAccessToken();
