@@ -1,8 +1,14 @@
+/**
+ * OmniMarket AI - Login Page
+ * Preserves Tuck Mascot animations, eye tracking, shake feedback, and login flow.
+ */
+
 import React, { useState } from 'react';
 import TuckMascot from '../components/TuckMascot';
-import { loginUser } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
 
 export default function LoginPage({ onLoginSuccess, onNavigateRegister }) {
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -38,16 +44,15 @@ export default function LoginPage({ onLoginSuccess, onNavigateRegister }) {
 
     setLoading(true);
     try {
-      const data = await loginUser(email, password);
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userEmail', data.user.email);
-
+      const data = await login(email, password);
       setMascotState('success');
       setTimeout(() => {
-        onLoginSuccess(data.user.email);
+        if (onLoginSuccess) {
+          onLoginSuccess(data?.user?.email || email);
+        }
       }, 500);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Invalid email or password credentials');
       setMascotState('error');
     } finally {
       setLoading(false);
@@ -70,11 +75,17 @@ export default function LoginPage({ onLoginSuccess, onNavigateRegister }) {
             <p className="text-xs text-slate-400 mt-0.5">Enter your store email and password.</p>
           </div>
 
-          {error && <div className="mb-4 p-3 bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs rounded-xl font-medium">{error}</div>}
+          {error && (
+            <div className="mb-4 p-3 bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs rounded-xl font-medium">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Store Email Address</label>
+              <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                Store Email Address
+              </label>
               <input
                 type="email"
                 required
@@ -83,12 +94,14 @@ export default function LoginPage({ onLoginSuccess, onNavigateRegister }) {
                 onFocus={() => setMascotState('email')}
                 onBlur={() => setMascotState('default')}
                 placeholder="moufik241-35-391@diu.edu.bd"
-                className="w-full px-4 py-2.5 bg-slate-950/80 border border-slate-700 rounded-xl text-sm outline-none focus:border-cyan-500 transition"
+                className="w-full px-4 py-2.5 bg-slate-950/80 border border-slate-700 rounded-xl text-sm outline-none focus:border-cyan-500 transition text-white placeholder-slate-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">Password</label>
+              <label className="block text-xs font-semibold text-slate-300 uppercase mb-1">
+                Password
+              </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -98,7 +111,7 @@ export default function LoginPage({ onLoginSuccess, onNavigateRegister }) {
                   onFocus={handlePasswordFocus}
                   onBlur={() => !showPassword && setMascotState('default')}
                   placeholder="••••••••••••"
-                  className="w-full px-4 pr-12 py-2.5 bg-slate-950/80 border border-slate-700 rounded-xl text-sm outline-none focus:border-cyan-500 transition"
+                  className="w-full px-4 pr-12 py-2.5 bg-slate-950/80 border border-slate-700 rounded-xl text-sm outline-none focus:border-cyan-500 transition text-white placeholder-slate-500"
                 />
                 <button
                   type="button"
@@ -113,7 +126,7 @@ export default function LoginPage({ onLoginSuccess, onNavigateRegister }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 font-bold rounded-xl text-sm shadow-lg transition active:scale-[0.99] disabled:opacity-60"
+              className="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 font-bold rounded-xl text-sm shadow-lg transition active:scale-[0.99] disabled:opacity-60 flex items-center justify-center gap-2"
             >
               {loading ? 'Authenticating...' : 'Sign In to Dashboard'}
             </button>
@@ -121,7 +134,10 @@ export default function LoginPage({ onLoginSuccess, onNavigateRegister }) {
 
           <p className="text-center text-xs text-slate-400 pt-5 mt-4 border-t border-slate-800">
             Don't have an account?{' '}
-            <button onClick={onNavigateRegister} className="text-cyan-400 font-semibold hover:underline">
+            <button
+              onClick={onNavigateRegister}
+              className="text-cyan-400 font-semibold hover:underline"
+            >
               Create an account
             </button>
           </p>
