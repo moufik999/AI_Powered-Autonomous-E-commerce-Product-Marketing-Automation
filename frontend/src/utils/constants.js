@@ -2,7 +2,7 @@
  * OmniMarket AI - Frontend Constants
  */
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ai-powered-autonomous-server-1-opps1a7ct-moufik.vercel.app/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://ai-powered-autonomous-server-1.vercel.app/api';
 
 export const STORAGE_KEYS = {
   TOKEN: 'token',
