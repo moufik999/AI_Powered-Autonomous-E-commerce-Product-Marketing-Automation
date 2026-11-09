@@ -7,6 +7,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const facebookRoutes = require('./routes/facebookRoutes');
@@ -105,6 +106,27 @@ app.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: Math.floor(process.uptime())
   });
+});
+
+// 4.5. Database Connection Middleware (Resilient for Serverless & Long-Running Environments)
+app.use(async (req, res, next) => {
+  // Preflight requests and static health checks do not require database connection
+  if (req.method === 'OPTIONS' || req.path === '/' || req.path === '/health') {
+    return next();
+  }
+
+  try {
+    await connectDB();
+    next();
+  } catch (dbErr) {
+    logger.error(`Database Connection Middleware Error: ${dbErr.message}`);
+    return res.status(503).json({
+      success: false,
+      message: 'Database connection failed. Please ensure MongoDB Atlas allows access from all IP addresses (0.0.0.0/0).',
+      code: 'DB_CONNECTION_ERROR',
+      error: dbErr.message
+    });
+  }
 });
 
 // 5. Mount API Routes
