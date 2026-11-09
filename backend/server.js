@@ -9,11 +9,13 @@ const path = require('path');
 // 1. Load Environment Variables
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-// 2. DNS Resolution Fix for MongoDB SRV on some ISPs / Windows
-try {
-  dns.setServers(['8.8.8.8', '8.8.4.4']);
-} catch (dnsErr) {
-  console.warn('DNS server override warning:', dnsErr.message);
+// 2. DNS Resolution Fix for MongoDB SRV on local Windows dev only
+if (process.platform === 'win32' && !process.env.VERCEL && process.env.NODE_ENV !== 'production') {
+  try {
+    dns.setServers(['8.8.8.8', '8.8.4.4']);
+  } catch (dnsErr) {
+    console.warn('DNS server override warning:', dnsErr.message);
+  }
 }
 
 const app = require('./app');
@@ -24,7 +26,7 @@ const logger = require('./utils/logger');
 
 const PORT = process.env.PORT || 5000;
 
-// 3. Initialize Database and Start Server
+// 3. Initialize Database and Start Server for standalone long-running host
 const startServer = async () => {
   try {
     // Connect to MongoDB Atlas
@@ -39,7 +41,7 @@ const startServer = async () => {
     // Start HTTP Server
     const server = app.listen(PORT, () => {
       logger.info(`==================================================`);
-      logger.info(`⚡ OmniMarket AI Backend Server running successfully`);
+      logger.info(`⚡ Backend Server running successfully`);
       logger.info(`🌐 URL: http://localhost:${PORT}`);
       logger.info(`🩺 Health Check: http://localhost:${PORT}/health`);
       logger.info(`🛡️ Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -75,7 +77,9 @@ const startServer = async () => {
   }
 };
 
-// Start the server
-const serverInstance = startServer();
+// Start the server when running in non-serverless mode
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
+  startServer();
+}
 
-module.exports = serverInstance;
+module.exports = app;
