@@ -22,33 +22,34 @@ class FacebookService {
    * the Page Access Token via GET /{pageId}?fields=access_token.
    */
   async getEffectivePageAccessToken(targetPageId, configuredToken) {
+    const cleanToken = (configuredToken || '').trim().replace(/^["']|["']$/g, '');
+    const cleanId = (targetPageId || '').toString().trim().replace(/[^0-9]/g, '');
+
     if (
       this._cachedPageToken &&
-      this._cachedForPageId === targetPageId &&
-      this._cachedSourceToken === configuredToken
+      this._cachedForPageId === cleanId &&
+      this._cachedSourceToken === cleanToken
     ) {
       return this._cachedPageToken;
     }
 
     try {
-      const pageInfoUrl = `${facebookConfig.getBaseUrl()}/${facebookConfig.getGraphApiVersion()}/${targetPageId}?fields=id,name,access_token`;
-      const res = await axios.get(pageInfoUrl, {
-        params: { access_token: configuredToken },
-        timeout: 10000
-      });
+      const pageInfoUrl = `${facebookConfig.getBaseUrl()}/${facebookConfig.getGraphApiVersion()}/${cleanId}?fields=id,name,access_token&access_token=${encodeURIComponent(cleanToken)}`;
+      const res = await fetch(pageInfoUrl);
+      const data = await res.json();
 
-      if (res.data && res.data.access_token) {
-        logger.info(`✓ Successfully resolved Page Access Token for Page: "${res.data.name || targetPageId}"`);
-        this._cachedPageToken = res.data.access_token;
-        this._cachedForPageId = targetPageId;
-        this._cachedSourceToken = configuredToken;
+      if (data && data.access_token) {
+        logger.info(`✓ Successfully resolved Page Access Token for Page: "${data.name || cleanId}"`);
+        this._cachedPageToken = data.access_token.trim();
+        this._cachedForPageId = cleanId;
+        this._cachedSourceToken = cleanToken;
         return this._cachedPageToken;
       }
     } catch (err) {
       logger.debug('Could not auto-resolve nested Page token, will attempt using configured token directly:', err.message);
     }
 
-    return configuredToken;
+    return cleanToken;
   }
 
   /**
@@ -84,12 +85,13 @@ class FacebookService {
       let response;
 
       if (imageUrl && typeof imageUrl === 'string') {
+        const cleanImageUrl = imageUrl.trim();
         const photosUrl = facebookConfig.getPhotosUrl(targetPageId);
 
-        if (imageUrl.startsWith('data:image')) {
+        if (cleanImageUrl.startsWith('data:image')) {
           // 1. Publish Canvas Photocard (Data URL) via Multipart FormData
           logger.info(`Publishing Canvas Photocard to Facebook Page Photos: ${targetPageId}`);
-          const matches = imageUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+          const matches = cleanImageUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
           if (matches && matches.length === 3) {
             const mimeType = matches[1] || 'image/png';
             const buffer = Buffer.from(matches[2], 'base64');
@@ -97,27 +99,41 @@ class FacebookService {
             const formData = new FormData();
             formData.append('source', blob, 'photocard.png');
             formData.append('caption', caption.trim());
-            formData.append('access_token', effectiveToken);
+            formData.append('access_token', effectiveToken.trim());
 
-            response = await axios.post(photosUrl, formData, {
-              timeout: 30000
+            const res = await fetch(photosUrl, {
+              method: 'POST',
+              body: formData
             });
-          }
-        } else if (imageUrl.startsWith('http')) {
-          // 2. Publish Image Post via remote URL
-          logger.info(`Publishing Photo post (URL) to Facebook Page Photos: ${targetPageId}`);
-          response = await axios.post(
-            photosUrl,
-            {
-              url: imageUrl,
-              caption: caption.trim(),
-              access_token: effectiveToken
-            },
-            {
-              timeout: 25000,
-              headers: { 'Content-Type': 'application/json' }
+            const data = await res.json();
+            if (!res.ok || data.error) {
+              const err = new Error(data.error?.message || `Facebook Photo Upload failed (Status ${res.status})`);
+              err.fbError = data.error;
+              err.statusCode = res.status;
+              throw err;
             }
-          );
+            response = { data };
+          }
+        } else if (cleanImageUrl.startsWith('http://') || cleanImageUrl.startsWith('https://')) {
+          // 2. Publish Image Post via remote URL (e.g. Cloudinary CDN)
+          logger.info(`Publishing Photo post (URL) to Facebook Page Photos: ${targetPageId}`);
+          const res = await fetch(photosUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              url: cleanImageUrl,
+              caption: caption.trim(),
+              access_token: effectiveToken.trim()
+            })
+          });
+          const data = await res.json();
+          if (!res.ok || data.error) {
+            const err = new Error(data.error?.message || `Facebook Photo URL Publish failed (Status ${res.status})`);
+            err.fbError = data.error;
+            err.statusCode = res.status;
+            throw err;
+          }
+          response = { data };
         }
       }
 
@@ -125,17 +141,22 @@ class FacebookService {
         // 3. Publish Text Post to Page Feed endpoint
         logger.info(`Publishing Text post to Facebook Page: ${targetPageId}`);
         const feedUrl = facebookConfig.getFeedUrl(targetPageId);
-        response = await axios.post(
-          feedUrl,
-          {
+        const res = await fetch(feedUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             message: caption.trim(),
-            access_token: effectiveToken
-          },
-          {
-            timeout: 15000,
-            headers: { 'Content-Type': 'application/json' }
-          }
-        );
+            access_token: effectiveToken.trim()
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          const err = new Error(data.error?.message || `Facebook Feed Publish failed (Status ${res.status})`);
+          err.fbError = data.error;
+          err.statusCode = res.status;
+          throw err;
+        }
+        response = { data };
       }
 
       const postId = response.data.id || response.data.post_id;
@@ -157,7 +178,7 @@ class FacebookService {
       this._cachedPageToken = null;
 
       // Handle and sanitize Facebook API errors without leaking access token
-      const fbError = err.response?.data?.error;
+      const fbError = err.fbError || err.response?.data?.error;
       const rawMessage = fbError?.message || err.message || 'Unknown Facebook API error';
       const cleanMessage = logger.mask(rawMessage);
       const errorCode = fbError?.code;
@@ -211,30 +232,31 @@ class FacebookService {
     try {
       const pageInfoUrl = facebookConfig.getPageInfoUrl(pageId);
       const configuredToken = facebookConfig.getAccessToken();
-      const response = await axios.get(pageInfoUrl, {
-        params: { access_token: configuredToken },
-        timeout: 8000
-      });
+      const res = await fetch(`${pageInfoUrl}&access_token=${encodeURIComponent(configuredToken)}`);
+      const data = await res.json();
 
-      return {
-        isConfigured: true,
-        pageId,
-        pageName: response.data.name || 'Amar bazar',
-        category: response.data.category,
-        apiVersion,
-        status: 'Connected',
-        message: 'Connected to Meta Facebook Graph API'
-      };
+      if (res.ok && data.id) {
+        return {
+          isConfigured: true,
+          pageId,
+          pageName: data.name || 'Amar bazar',
+          category: data.category,
+          apiVersion,
+          status: 'Connected',
+          message: 'Connected to Meta Facebook Graph API'
+        };
+      }
     } catch (err) {
       logger.warn(`Could not verify Facebook Page status: ${logger.mask(err.message)}`);
-      return {
-        isConfigured: true,
-        pageId,
-        apiVersion,
-        status: 'Connected (Fallback)',
-        message: 'Page credentials configured.'
-      };
     }
+
+    return {
+      isConfigured: true,
+      pageId,
+      apiVersion,
+      status: 'Connected (Fallback)',
+      message: 'Page credentials configured.'
+    };
   }
 }
 
