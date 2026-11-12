@@ -29,9 +29,11 @@ class ImageGenService {
     category = 'General',
     backgroundPrompt = '',
     templateId = 'general',
-    forceRegenerate = false
+    forceRegenerate = false,
+    productName = ''
   }) {
-    const cacheKey = `${category}_${templateId}_${crypto.createHash('md5').update(backgroundPrompt).digest('hex').substring(0, 8)}`;
+    const rawSeed = `${category}_${templateId}_${backgroundPrompt}_${productName}`;
+    const cacheKey = `${category}_${templateId}_${crypto.createHash('md5').update(rawSeed).digest('hex').substring(0, 8)}`;
 
     if (!forceRegenerate && backgroundMemoryCache.has(cacheKey)) {
       logger.info(`✓ Reusing cached commercial background for category: "${category}" [CacheKey: ${cacheKey}]`);

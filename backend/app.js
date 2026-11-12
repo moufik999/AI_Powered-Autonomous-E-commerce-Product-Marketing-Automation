@@ -13,35 +13,28 @@ const aiRoutes = require('./routes/aiRoutes');
 const facebookRoutes = require('./routes/facebookRoutes');
 const productRoutes = require('./routes/productRoutes');
 const photocardRoutes = require('./routes/photocardRoutes');
+const postRoutes = require('./routes/postRoutes');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const logger = require('./utils/logger');
 
 const app = express();
-
-// 1. Strict & Resilient CORS Configuration
 const allowedOrigins = [
   'https://ai-powered-autonomous-client.vercel.app',
   process.env.CLIENT_URL,
   'http://localhost:3000',
   'http://localhost:5173'
 ].filter(Boolean);
-
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow non-browser requests (e.g. server-to-server, curl, Postman, health checks)
     if (!origin) return callback(null, true);
 
-    // Exact origin match
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
-    // Match any client preview deployments on Vercel
     if (/^https:\/\/ai-powered-autonomous-client(-[a-z0-9-]+)?\.vercel\.app$/.test(origin)) {
       return callback(null, true);
     }
-
-    // Reject disallowed origins without throwing an unhandled Express error
     return callback(null, false);
   },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -58,11 +51,7 @@ const corsOptions = {
   credentials: true,
   optionsSuccessStatus: 204
 };
-
-// Register CORS middleware before all parsers and API routes
 app.use(cors(corsOptions));
-
-// Explicit preflight handler ensuring OPTIONS requests are handled with 204 and NEVER redirected
 app.options('*', cors(corsOptions));
 
 // Guard against any accidental redirect on OPTIONS requests
@@ -135,6 +124,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/facebook', facebookRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/photocard', photocardRoutes);
+app.use('/api/posts', postRoutes);
 
 // 6. Centralized Error Handling
 app.use(notFound);

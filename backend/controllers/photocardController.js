@@ -10,6 +10,7 @@ const imageGenService = require('../services/imageGenService');
 const sharpCompositorService = require('../services/sharpCompositorService');
 const cloudinaryService = require('../services/cloudinaryService');
 const Photocard = require('../models/Photocard');
+const Post = require('../models/Post');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 const { successResponse, errorResponse } = require('../utils/apiResponse');
 const logger = require('../utils/logger');
@@ -59,7 +60,8 @@ exports.generatePhotocard = asyncHandler(async (req, res) => {
     category: detectedCategory,
     backgroundPrompt: analysis.backgroundPrompt || template.promptKeyword,
     templateId: template.templateId,
-    forceRegenerate: forceRegenerateBackground
+    forceRegenerate: forceRegenerateBackground,
+    productName: productName.trim()
   });
 
   // Calculate Offer Price if price and discount exist
@@ -98,15 +100,17 @@ exports.generatePhotocard = asyncHandler(async (req, res) => {
     storeName
   });
 
-  // Step 5: Upload Photocard and Background to Cloudinary in parallel
+  // Step 5: Upload Photocard and Background to Cloudinary with unique IDs per generation
   logger.info(`[Photocard Workflow] 5. Uploading photocard & background to Cloudinary / CDN...`);
+  const uniqueToken = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const [uploadResult, bgUploadResult] = await Promise.all([
     cloudinaryService.uploadImage(composedBuffer, {
       folder: `omnimarket_photocards/${detectedCategory.toLowerCase()}`,
-      publicId: `${detectedCategory.toLowerCase()}_${Date.now()}`
+      publicId: `${detectedCategory.toLowerCase()}_${uniqueToken}`
     }),
     cloudinaryService.uploadImage(backgroundResult.buffer, {
-      folder: `omnimarket_backgrounds/${detectedCategory.toLowerCase()}`
+      folder: `omnimarket_backgrounds/${detectedCategory.toLowerCase()}`,
+      publicId: `bg_${detectedCategory.toLowerCase()}_${uniqueToken}`
     })
   ]);
 
@@ -134,6 +138,32 @@ exports.generatePhotocard = asyncHandler(async (req, res) => {
       }
     });
     logger.info(`✓ Photocard record saved to MongoDB: ${photocardRecord._id}`);
+
+    // Auto-save comprehensive Post record (with duplicate prevention)
+    try {
+      const resolvedUserEmail = req.body.userEmail || req.user?.email || 'moufik241-35-391@diu.edu.bd';
+      const resolvedCaption = req.body.generatedCaption || req.body.caption || analysis.marketingHeadline || `🔥 Hot Deal on ${productName}! ${discount ? `Limited ${discount} special offer.` : ''} Shop now at Amar bazar.`;
+      
+      const existingDuplicate = await Post.findOne({ photocardUrl: uploadResult.secureUrl });
+      if (!existingDuplicate) {
+        await Post.create({
+          userEmail: resolvedUserEmail,
+          productName: productName.trim(),
+          productDetails: details || (analysis.features ? analysis.features.join(', ') : ''),
+          price: price || '',
+          discount: discount || '',
+          generatedCaption: resolvedCaption,
+          photocardUrl: uploadResult.secureUrl,
+          metadata: {
+            templateId: template.templateId,
+            photocardId: photocardRecord?._id
+          }
+        });
+        logger.info(`✓ Post document saved to MongoDB for user: ${resolvedUserEmail}`);
+      }
+    } catch (postSaveErr) {
+      logger.warn('Failed to auto-save Post record in MongoDB:', postSaveErr.message);
+    }
   } catch (dbErr) {
     logger.warn('Failed to save Photocard record in MongoDB:', dbErr.message);
   }

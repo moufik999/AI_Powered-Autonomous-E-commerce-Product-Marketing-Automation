@@ -9,6 +9,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRAGPost } from '../hooks/useRAGPost';
 import { removeImageBackground } from '../utils/photocardCompositor';
 import { photocardService } from '../services/photocardService';
+import { postService } from '../services/postService';
 
 const CATEGORY_SUGGESTIONS = [
   'Gaming',
@@ -118,6 +119,7 @@ const RAGPostGenerator = () => {
 
     // 2. Generate AI Photocard via Sharp + OpenAI + Gemini backend pipeline
     setGeneratingPhotocard(true);
+    const activeUserEmail = localStorage.getItem('userEmail') || 'moufik241-35-391@diu.edu.bd';
     try {
       const res = await photocardService.generatePhotocard({
         productName: productName.trim(),
@@ -126,7 +128,8 @@ const RAGPostGenerator = () => {
         discount: discount.trim(),
         details: details.trim(),
         productCutout: cutoutDataUrl,
-        templateId: selectedTemplateId || undefined
+        templateId: selectedTemplateId || undefined,
+        userEmail: activeUserEmail
       });
 
       const photocard = res?.photocard || res?.data?.photocard || res?.data;
@@ -134,6 +137,21 @@ const RAGPostGenerator = () => {
         setPhotocardResult(photocard);
         if (photocard.template?.templateId) {
           setSelectedTemplateId(photocard.template.templateId);
+        }
+
+        // Auto-save complete post document into MongoDB
+        try {
+          await postService.savePost({
+            userEmail: activeUserEmail,
+            productName: productName.trim(),
+            productDetails: details.trim(),
+            price: price.trim(),
+            discount: discount.trim(),
+            generatedCaption: posts[0]?.caption || photocard.analysis?.marketingHeadline || `${productName.trim()} - Special launch offer!`,
+            photocardUrl: photocard.finalImageUrl
+          });
+        } catch (saveErr) {
+          console.debug('Post record auto-save notice:', saveErr.message);
         }
       }
     } catch (err) {

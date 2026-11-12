@@ -34,7 +34,8 @@ class FacebookService {
     }
 
     try {
-      const pageInfoUrl = `${facebookConfig.getBaseUrl()}/${facebookConfig.getGraphApiVersion()}/${cleanId}?fields=id,name,access_token&access_token=${encodeURIComponent(cleanToken)}`;
+      const pageInfoUrl = `${facebookConfig.getBaseUrl()}/${facebookConfig.getGraphApiVersion()}/${cleanId}
+      ?fields=id,name,access_token&access_token=${encodeURIComponent(cleanToken)}`;
       const res = await fetch(pageInfoUrl);
       const data = await res.json();
 

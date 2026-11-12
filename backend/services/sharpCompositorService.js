@@ -28,12 +28,8 @@ class SharpCompositorService {
     const W = 1080;
     const H = 1080;
 
-    // 1. Ensure background is exactly 1080x1080 PNG
     let baseImage = sharp(backgroundBuffer).resize(W, H, { fit: 'cover' });
-
     const compositeLayers = [];
-
-    // 2. Prepare & Scale the Cutout Real Product Image
     if (productCutout) {
       try {
         let productBuffer;
