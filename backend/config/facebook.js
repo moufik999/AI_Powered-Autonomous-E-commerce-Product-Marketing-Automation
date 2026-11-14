@@ -66,6 +66,22 @@ const getPageInfoUrl = (pageId = getPageId()) => {
   return `${getBaseUrl()}/${getGraphApiVersion()}/${cleanId}?fields=id,name,category,link,verification_status`;
 };
 
+const getVerifyToken = () => {
+  const raw = (process.env.FB_VERIFY_TOKEN || process.env.META_VERIFY_TOKEN || '').toString();
+  const token = sanitize(raw);
+  return token || 'omnimarket_meta_webhook_token_2026';
+};
+
+const getMessagesUrl = (pageId = getPageId()) => {
+  const cleanId = sanitize(pageId).replace(/[^0-9]/g, '') || getPageId();
+  return `${getBaseUrl()}/${getGraphApiVersion()}/${cleanId}/messages`;
+};
+
+const getCommentReplyUrl = (commentId) => {
+  const cleanCommentId = sanitize(commentId);
+  return `${getBaseUrl()}/${getGraphApiVersion()}/${cleanCommentId}/comments`;
+};
+
 const getMaskedToken = () => {
   const token = getAccessToken();
   if (!token) return 'NOT_CONFIGURED';
@@ -78,9 +94,12 @@ module.exports = {
   getBaseUrl,
   getPageId,
   getAccessToken,
+  getVerifyToken,
   isFacebookConfigured,
   getFeedUrl,
   getPhotosUrl,
   getPageInfoUrl,
+  getMessagesUrl,
+  getCommentReplyUrl,
   getMaskedToken
 };
