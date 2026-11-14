@@ -14,6 +14,7 @@ const facebookRoutes = require('./routes/facebookRoutes');
 const productRoutes = require('./routes/productRoutes');
 const photocardRoutes = require('./routes/photocardRoutes');
 const postRoutes = require('./routes/postRoutes');
+const facebookController = require('./controllers/facebookController');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 const logger = require('./utils/logger');
 
@@ -80,6 +81,7 @@ app.get('/', (req, res) => {
     frontend: 'http://localhost:3000',
     documentation: {
       health: '/health',
+      webhook: '/webhook',
       photocard: '/api/photocard',
       ai: '/api/ai',
       facebook: '/api/facebook'
@@ -97,10 +99,22 @@ app.get('/health', (req, res) => {
   });
 });
 
+// 4.1. Meta Graph API Webhook Verification & Ingestion Routes (Root /webhook as specified by Meta)
+app.get('/webhook', facebookController.verifyWebhook);
+app.post('/webhook', facebookController.handleWebhook);
+app.get('/api/webhook', facebookController.verifyWebhook);
+app.post('/api/webhook', facebookController.handleWebhook);
+
 // 4.5. Database Connection Middleware (Resilient for Serverless & Long-Running Environments)
 app.use(async (req, res, next) => {
-  // Preflight requests and static health checks do not require database connection
-  if (req.method === 'OPTIONS' || req.path === '/' || req.path === '/health') {
+  // Preflight requests, static health checks, and webhooks do not block on database connection
+  if (
+    req.method === 'OPTIONS' ||
+    req.path === '/' ||
+    req.path === '/health' ||
+    req.path === '/webhook' ||
+    req.path === '/api/webhook'
+  ) {
     return next();
   }
 
