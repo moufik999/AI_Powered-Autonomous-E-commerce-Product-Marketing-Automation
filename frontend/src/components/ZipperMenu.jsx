@@ -78,36 +78,65 @@ export const DEFAULT_ZIPPER_ITEMS = [
 ];
 
 // Procedural diagonal denim twill texture with #1e3252
-function createDenimPattern() {
+function createDenimPattern(isDark = true) {
   const size = 32;
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d');
 
-  // Base denim color #1e3252 as specified
-  ctx.fillStyle = '#1e3252';
-  ctx.fillRect(0, 0, size, size);
+  if (isDark) {
+    // Base semi-transparent color to let the glass background show through
+    ctx.fillStyle = 'rgba(30, 30, 30, 0.72)';
+    ctx.fillRect(0, 0, size, size);
 
-  // Diagonal 3/1 twill weave lines (45 degrees)
-  ctx.lineWidth = 1.2;
-  for (let offset = -size; offset < size * 2; offset += 4) {
-    ctx.beginPath();
-    ctx.moveTo(offset, 0);
-    ctx.lineTo(offset + size, size);
-    ctx.strokeStyle = Math.abs(offset) % 8 === 0 ? '#274470' : '#172740';
-    ctx.stroke();
-  }
+    // Subtle diagonal grain lines
+    ctx.lineWidth = 1.2;
+    for (let offset = -size; offset < size * 2; offset += 4) {
+      ctx.beginPath();
+      ctx.moveTo(offset, 0);
+      ctx.lineTo(offset + size, size);
+      ctx.strokeStyle = Math.abs(offset) % 8 === 0 ? '#323232' : '#222222';
+      ctx.stroke();
+    }
 
-  // Warp and weft thread flecks
-  for (let x = 0; x < size; x += 2) {
-    for (let y = 0; y < size; y += 2) {
-      if ((x + y) % 4 === 0) {
-        ctx.fillStyle = 'rgba(180, 205, 235, 0.16)';
-        ctx.fillRect(x, y, 1, 1);
-      } else if ((x - y) % 3 === 0) {
-        ctx.fillStyle = 'rgba(10, 16, 30, 0.32)';
-        ctx.fillRect(x, y, 1, 1);
+    // Warp and weft thread flecks
+    for (let x = 0; x < size; x += 2) {
+      for (let y = 0; y < size; y += 2) {
+        if ((x + y) % 4 === 0) {
+          ctx.fillStyle = 'rgba(180, 205, 235, 0.16)';
+          ctx.fillRect(x, y, 1, 1);
+        } else if ((x - y) % 3 === 0) {
+          ctx.fillStyle = 'rgba(10, 16, 30, 0.32)';
+          ctx.fillRect(x, y, 1, 1);
+        }
+      }
+    }
+  } else {
+    // Cream light mode texture
+    ctx.fillStyle = '#F8F7F4';
+    ctx.fillRect(0, 0, size, size);
+
+    // Subtle diagonal cream twill weave lines
+    ctx.lineWidth = 1.2;
+    for (let offset = -size; offset < size * 2; offset += 4) {
+      ctx.beginPath();
+      ctx.moveTo(offset, 0);
+      ctx.lineTo(offset + size, size);
+      ctx.strokeStyle = Math.abs(offset) % 8 === 0 ? '#ece9e1' : '#f3f1ea';
+      ctx.stroke();
+    }
+
+    // Subtle light flecks
+    for (let x = 0; x < size; x += 2) {
+      for (let y = 0; y < size; y += 2) {
+        if ((x + y) % 4 === 0) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+          ctx.fillRect(x, y, 1, 1);
+        } else if ((x - y) % 3 === 0) {
+          ctx.fillStyle = 'rgba(215, 210, 200, 0.2)';
+          ctx.fillRect(x, y, 1, 1);
+        }
       }
     }
   }
@@ -146,13 +175,26 @@ export default function ZipperMenu({
   items = DEFAULT_ZIPPER_ITEMS,
   onSignOut,
   className = '',
-  initialSliderY = MAX_Y // Default open or custom
+  initialSliderY = MAX_Y, // Default open or custom
+  theme
 }) {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [sliderY, setSliderY] = useState(initialSliderY);
   const [isDragging, setIsDragging] = useState(false);
+  const [, setRerender] = useState(0);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setRerender((v) => v + 1);
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    return () => observer.disconnect();
+  }, []);
 
   const canvasRef = useRef(null);
   const denimPatternRef = useRef(null);
@@ -309,11 +351,9 @@ export default function ZipperMenu({
     ctx.clearRect(0, 0, W, H);
 
     // Prepare denim pattern
-    if (!denimPatternRef.current) {
-      const pCanvas = createDenimPattern();
-      denimPatternRef.current = ctx.createPattern(pCanvas, 'repeat');
-    }
-    const denimPattern = denimPatternRef.current;
+    const isDark = theme === 'dark' || document.documentElement.classList.contains('dark');
+    const pCanvas = createDenimPattern(isDark);
+    const denimPattern = ctx.createPattern(pCanvas, 'repeat');
 
     // 1. Draw Left Denim Flap
     ctx.save();
@@ -330,7 +370,7 @@ export default function ZipperMenu({
     ctx.fill();
 
     // Fabric cut edge shadow
-    ctx.strokeStyle = 'rgba(10, 16, 28, 0.85)';
+    ctx.strokeStyle = isDark ? 'rgba(10, 16, 28, 0.85)' : 'rgba(200, 195, 185, 0.85)';
     ctx.lineWidth = 1.8;
     ctx.stroke();
     ctx.restore();
@@ -434,7 +474,7 @@ export default function ZipperMenu({
     }
 
     ctx.restore();
-  }, [sliderY]);
+  }, [sliderY, theme]);
 
   // Unzipped Percentage & State Label
   const unzippedPercent = Math.round(((sliderY - MIN_Y) / (MAX_Y - MIN_Y)) * 100);
@@ -458,7 +498,7 @@ export default function ZipperMenu({
 
       {/* 2. Container: nav.zipper */}
       <nav
-        className="zipper"
+        className="zipper bg-[#F8F7F4] dark:bg-white/5"
         style={{
           '--zipper-w': `${W}px`,
           '--zipper-h': `${H}px`,
@@ -493,17 +533,11 @@ export default function ZipperMenu({
                 <button
                   type="button"
                   onClick={() => handleItemClick(item)}
-                  className={`zipper-link-btn ${isActive ? 'is-active' : ''} ${
+                  className={`zipper-link-btn text-black dark:text-white hover:bg-black/5 hover:scale-[1.02] transition-all duration-200 dark:hover:bg-white/10 ${isActive ? 'is-active' : ''} ${
                     item.isProfile ? 'is-profile' : ''
                   } ${item.isSignout ? 'is-signout' : ''}`}
                 >
-                  <div className="zipper-link-icon-wrap">
-                    <span>{item.icon}</span>
-                  </div>
-                  <div className="zipper-link-info">
-                    <span className="zipper-link-title">{item.label}</span>
-                    <span className="zipper-link-subtitle">{item.subtitle}</span>
-                  </div>
+                  <span className="zipper-link-title text-black dark:text-white">{item.label}</span>
                   {isActive && <span className="zipper-link-active-indicator" />}
                 </button>
               </li>
