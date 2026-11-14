@@ -106,7 +106,7 @@ export default function DashboardOverview({ onNavigate, userEmail }) {
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-purple-900/20 border border-slate-700/60 p-6 sm:p-8 backdrop-blur-md">
+      <div className="relative overflow-hidden rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/40 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all duration-300 p-6 sm:p-8">
         <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-amber-300 text-xs font-semibold mb-2">
@@ -133,7 +133,7 @@ export default function DashboardOverview({ onNavigate, userEmail }) {
         {metrics.map((m, idx) => (
           <div
             key={idx}
-            className={`p-5 rounded-2xl bg-gradient-to-br ${m.color} bg-slate-900/80 border ${m.border} backdrop-blur-md flex flex-col justify-between`}
+            className={`p-5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/40 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all duration-300 flex flex-col justify-between`}
           >
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -155,10 +155,10 @@ export default function DashboardOverview({ onNavigate, userEmail }) {
           <div
             key={action.id}
             onClick={() => onNavigate(action.id)}
-            className="group p-6 rounded-2xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/90 transition cursor-pointer flex flex-col justify-between shadow-lg"
+            className="group p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/40 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all duration-300 cursor-pointer flex flex-col justify-between"
           >
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-2xl group-hover:scale-110 transition flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-2xl group-hover:scale-110 transition flex-shrink-0">
                 {action.icon}
               </div>
               <div>
@@ -170,7 +170,7 @@ export default function DashboardOverview({ onNavigate, userEmail }) {
                 </p>
               </div>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs font-semibold text-slate-300 group-hover:text-amber-300">
+            <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-semibold text-slate-300 group-hover:text-amber-300">
               <span>{action.actionText}</span>
               <span className="transform group-hover:translate-x-1 transition">→</span>
             </div>
@@ -179,7 +179,7 @@ export default function DashboardOverview({ onNavigate, userEmail }) {
       </div>
 
       {/* Recent Campaign Activity */}
-      <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-xl">
+      <div className="p-6 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/40 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all duration-300 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <span>📡</span> Recent Live Social Publications
