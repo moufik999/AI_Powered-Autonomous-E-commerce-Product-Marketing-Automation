@@ -86,7 +86,7 @@ export default function PhotocardGalleryView({ onNavigateToGenerator }) {
         <div className="flex items-center gap-3">
           <button
             onClick={loadPhotocards}
-            className="px-3.5 py-2 rounded-xl bg-slate-850 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300 transition flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/20 border border-white/10 hover:border-white/40 text-xs font-semibold text-white transition-all duration-300 flex items-center gap-1.5"
             title="Refresh photocard gallery"
           >
             <span>🔄</span> Refresh
@@ -110,8 +110,8 @@ export default function PhotocardGalleryView({ onNavigateToGenerator }) {
 
       {/* Empty State */}
       {!loading && photocards.length === 0 && (
-        <div className="p-12 text-center rounded-2xl bg-slate-900/50 border border-slate-800/80 flex flex-col items-center justify-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-3xl">
+        <div className="p-12 text-center rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-white/40 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all duration-300 flex flex-col items-center justify-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-3xl">
             🖼️
           </div>
           <div>
@@ -140,10 +140,10 @@ export default function PhotocardGalleryView({ onNavigateToGenerator }) {
             return (
               <div
                 key={cardId}
-                className="group rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-xl hover:border-slate-700 transition flex flex-col justify-between"
+                className="group rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden shadow-xl hover:border-white/40 hover:shadow-[0_0_15px_rgba(255,255,255,0.1)] transition-all duration-300 flex flex-col justify-between"
               >
                 {/* Photocard Image Container */}
-                <div className="relative aspect-square w-full bg-slate-950 overflow-hidden">
+                <div className="relative aspect-square w-full bg-black/30 overflow-hidden">
                   {imageUrl ? (
                     <img
                       src={imageUrl}
@@ -173,7 +173,7 @@ export default function PhotocardGalleryView({ onNavigateToGenerator }) {
                 </div>
 
                 {/* Card Details & Download Action */}
-                <div className="p-4 flex flex-col justify-between flex-1 space-y-3">
+                <div className="p-4 flex flex-col justify-between flex-1 space-y-3 bg-white/[0.03] border-t border-white/10">
                   <div>
                     <h4 className="text-sm font-bold text-white tracking-tight line-clamp-1">
                       {card.productName || 'Commercial Photocard'}
