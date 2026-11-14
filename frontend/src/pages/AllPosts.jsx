@@ -98,7 +98,7 @@ export default function AllPosts() {
         <div className="flex items-center gap-3">
           <button
             onClick={loadPosts}
-            className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-300 transition flex items-center gap-1.5"
+            className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/20 border border-white/10 hover:border-white/40 text-xs font-semibold text-white transition-all duration-300 flex items-center gap-1.5"
             title="Refresh database records"
           >
             <span>🔄</span> Refresh
@@ -122,8 +122,8 @@ export default function AllPosts() {
 
       {/* 3. Empty State */}
       {!loading && posts.length === 0 && (
-        <div className="p-16 text-center rounded-3xl bg-slate-900/50 border border-slate-800/80 flex flex-col items-center justify-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-3xl">
+        <div className="p-16 text-center rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 flex flex-col items-center justify-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-3xl">
             📑
           </div>
           <div>
@@ -155,10 +155,10 @@ export default function AllPosts() {
             return (
               <div
                 key={postId}
-                className="rounded-3xl bg-slate-900/90 border border-slate-800 overflow-hidden shadow-2xl hover:border-slate-700/80 transition flex flex-col justify-between p-5 sm:p-6 space-y-5"
+                className="rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden shadow-2xl transition-all duration-300 ease-in-out hover:scale-105 hover:bg-white/10 hover:shadow-[0_10px_30px_rgba(255,255,255,0.05)] cursor-pointer flex flex-col justify-between p-5 sm:p-6 space-y-5"
               >
                 {/* A. Top of the Card: Product Name, Price, Discount, Date */}
-                <div className="flex flex-wrap items-start justify-between gap-3 pb-4 border-b border-slate-800">
+                <div className="flex flex-wrap items-start justify-between gap-3 pb-4 border-b border-white/10">
                   <div className="min-w-0 flex-1">
                     <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider block mb-0.5">
                       {post.createdAt ? new Date(post.createdAt).toLocaleString() : 'Archived Post'}
@@ -190,7 +190,7 @@ export default function AllPosts() {
                 {/* B. Photocard Image with Dynamic URL & Clear Download Button */}
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
                   <div className="sm:col-span-5 flex flex-col items-center space-y-2.5">
-                    <div className="relative aspect-square w-full rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden shadow-lg group">
+                    <div className="relative aspect-square w-full rounded-2xl bg-black/30 border border-white/10 overflow-hidden shadow-lg group">
                       {currentPostImageUrl ? (
                         <img
                           src={currentPostImageUrl}
@@ -225,7 +225,7 @@ export default function AllPosts() {
 
                       <button
                         onClick={() => handleCopyCaption(caption, postId)}
-                        className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-semibold text-amber-300 transition flex items-center gap-1 shadow-sm"
+                        className="px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/20 border border-white/10 hover:border-white/40 text-[11px] font-semibold text-amber-300 transition-all duration-300 flex items-center gap-1 shadow-sm"
                         title="Copy caption text to clipboard"
                       >
                         <span>{isCopied ? '✓' : '📋'}</span>
@@ -234,7 +234,7 @@ export default function AllPosts() {
                     </div>
 
                     {/* Scrollable Text Box */}
-                    <div className="w-full h-[180px] p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans overflow-y-auto whitespace-pre-line shadow-inner">
+                    <div className="w-full h-[180px] p-3.5 rounded-2xl bg-white/5 border border-white/10 text-xs text-white leading-relaxed font-sans overflow-y-auto whitespace-pre-line shadow-inner">
                       {caption || 'No caption text saved for this post.'}
                     </div>
 
