@@ -212,6 +212,110 @@ class FacebookService {
   }
 
   /**
+   * Send an automated Messenger reply to a user PSID
+   * @param {Object} params
+   * @param {string} params.recipientId - Recipient Page-Scoped ID (PSID)
+   * @param {string} params.messageText - The text response to deliver
+   * @param {string} [params.pageId] - Optional page ID
+   * @returns {Promise<{success: boolean, messageId?: string, error?: string, data?: any}>}
+   */
+  async sendMessengerReply({ recipientId, messageText, pageId = null }) {
+    if (!recipientId || !messageText) {
+      logger.warn('sendMessengerReply missing recipientId or messageText');
+      return { success: false, error: 'Recipient ID and message text are required' };
+    }
+
+    const targetPageId = pageId || facebookConfig.getPageId();
+    const rawConfiguredToken = facebookConfig.getAccessToken();
+    const effectiveToken = await this.getEffectivePageAccessToken(targetPageId, rawConfiguredToken);
+    const messagesUrl = facebookConfig.getMessagesUrl(targetPageId);
+
+    try {
+      logger.info(`Sending automated Messenger reply to PSID: ${recipientId}`);
+      const res = await fetch(`${messagesUrl}?access_token=${encodeURIComponent(effectiveToken)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipient: { id: recipientId },
+          message: { text: messageText },
+          messaging_type: 'RESPONSE'
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        const rawMsg = data.error?.message || `Messenger reply failed (Status ${res.status})`;
+        const cleanMsg = logger.mask(rawMsg);
+        logger.error(`Messenger Reply API Error [Code: ${data.error?.code || res.status}]: ${cleanMsg}`);
+        return { success: false, error: cleanMsg, data };
+      }
+
+      logger.info(`✓ Automated Messenger reply delivered successfully to PSID: ${recipientId}`);
+      return {
+        success: true,
+        messageId: data.message_id || data.id,
+        recipientId,
+        data
+      };
+    } catch (err) {
+      const cleanMsg = logger.mask(err.message);
+      logger.error(`Messenger network dispatch error: ${cleanMsg}`);
+      return { success: false, error: cleanMsg };
+    }
+  }
+
+  /**
+   * Send an automated comment reply to a Facebook Post Comment
+   * @param {Object} params
+   * @param {string} params.commentId - The Facebook comment ID to reply to
+   * @param {string} params.messageText - The comment response text
+   * @param {string} [params.pageId] - Optional page ID
+   * @returns {Promise<{success: boolean, replyId?: string, error?: string, data?: any}>}
+   */
+  async sendCommentReply({ commentId, messageText, pageId = null }) {
+    if (!commentId || !messageText) {
+      logger.warn('sendCommentReply missing commentId or messageText');
+      return { success: false, error: 'Comment ID and message text are required' };
+    }
+
+    const targetPageId = pageId || facebookConfig.getPageId();
+    const rawConfiguredToken = facebookConfig.getAccessToken();
+    const effectiveToken = await this.getEffectivePageAccessToken(targetPageId, rawConfiguredToken);
+    const commentReplyUrl = facebookConfig.getCommentReplyUrl(commentId);
+
+    try {
+      logger.info(`Posting automated comment reply to Comment ID: ${commentId}`);
+      const res = await fetch(`${commentReplyUrl}?access_token=${encodeURIComponent(effectiveToken)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: messageText
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        const rawMsg = data.error?.message || `Comment reply failed (Status ${res.status})`;
+        const cleanMsg = logger.mask(rawMsg);
+        logger.error(`Comment Reply API Error [Code: ${data.error?.code || res.status}]: ${cleanMsg}`);
+        return { success: false, error: cleanMsg, data };
+      }
+
+      logger.info(`✓ Automated comment reply posted successfully to Comment ID: ${commentId}`);
+      return {
+        success: true,
+        replyId: data.id || commentId,
+        commentId,
+        data
+      };
+    } catch (err) {
+      const cleanMsg = logger.mask(err.message);
+      logger.error(`Comment reply network dispatch error: ${cleanMsg}`);
+      return { success: false, error: cleanMsg };
+    }
+  }
+
+  /**
    * Retrieve page metadata and verify connectivity
    * @returns {Promise<{isConfigured: boolean, pageId: string, pageName?: string, apiVersion: string}>}
    */
