@@ -58,7 +58,7 @@ export default function BlankDashboard({ userEmail, onSignOut }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#070a12] text-white p-4 sm:p-6 lg:p-8 font-sans">
+    <div className="min-h-screen bg-[#F8F7F4] dark:bg-[#070a12] text-gray-700 dark:text-white p-4 sm:p-6 lg:p-8 font-sans">
       <div className="w-full max-w-[1520px] mx-auto flex flex-col lg:flex-row items-center lg:items-start gap-8">
         {/* Left Column: The Exclusive Central Denim Zipper Navigation (400px height) */}
         <aside className="w-full lg:w-auto flex-shrink-0 flex justify-center lg:sticky lg:top-8 z-20">
@@ -70,7 +70,7 @@ export default function BlankDashboard({ userEmail, onSignOut }) {
         </aside>
 
         {/* Right Column: Active Feature Workspace */}
-        <main className="flex-1 min-w-0 w-full bg-slate-900/40 border border-slate-800/70 rounded-3xl p-5 sm:p-8 min-h-[500px] shadow-2xl backdrop-blur-md">
+        <main className="flex-1 min-w-0 w-full bg-white shadow-sm border border-gray-200 dark:bg-slate-900/40 dark:border-slate-800/70 rounded-3xl p-5 sm:p-8 min-h-[500px] dark:shadow-2xl dark:backdrop-blur-md">
           {/* 1. AI Post Generator */}
           {activeView === 'rag-generator' && <RAGPostGenerator />}
 
