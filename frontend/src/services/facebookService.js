@@ -25,6 +25,29 @@ export const facebookService = {
     return request('/facebook/history', {
       method: 'GET'
     });
+  },
+
+  // Get active Auto-Reply Rules and real-time execution statistics
+  getAutoReplyRules: async () => {
+    return request('/facebook/auto-reply-rules', {
+      method: 'GET'
+    });
+  },
+
+  // Update Auto-Reply Rules (toggles & custom response templates)
+  updateAutoReplyRules: async (rules) => {
+    return request('/facebook/auto-reply-rules', {
+      method: 'PUT',
+      body: JSON.stringify(rules)
+    });
+  },
+
+  // Simulate an incoming webhook event for live UI testing
+  testSimulateWebhook: async ({ type, testMessage, senderName }) => {
+    return request('/facebook/test-webhook', {
+      method: 'POST',
+      body: JSON.stringify({ type, testMessage, senderName })
+    });
   }
 };
 
