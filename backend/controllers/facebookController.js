@@ -8,6 +8,7 @@ const facebookService = require('../services/facebookService');
 const autoReplyService = require('../services/autoReplyService');
 const facebookConfig = require('../config/facebook');
 const MarketingContent = require('../models/MarketingContent');
+const Post = require('../models/Post');
 const mongoose = require('mongoose');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 const { successResponse } = require('../utils/apiResponse');
@@ -22,8 +23,7 @@ exports.publish = asyncHandler(async (req, res) => {
     imageUrl
   });
 
-  // Track publication in database if connected
-  if (mongoose.connection.readyState === 1) {
+  if (mongoose.connection.readyState === 1 && result.postId) {
     try {
       await MarketingContent.create({
         user: req.user?._id || null,
@@ -34,6 +34,40 @@ exports.publish = asyncHandler(async (req, res) => {
         facebookPostId: result.postId,
         publishedAt: new Date()
       });
+
+      let updated = false;
+      if (imageUrl && !imageUrl.startsWith('data:image')) {
+        const updateRes = await Post.findOneAndUpdate(
+          { photocardUrl: imageUrl },
+          { $set: { facebookPostId: result.postId } },
+          { sort: { createdAt: -1 }, new: true }
+        );
+        if (updateRes) updated = true;
+      }
+
+      if (!updated && caption) {
+        const lines = caption.split('\n').map(l => l.trim()).filter(Boolean);
+        const firstLine = lines[0] || '';
+        const updateRes = await Post.findOneAndUpdate(
+          {
+            $or: [
+              { generatedCaption: { $regex: new RegExp(firstLine.substring(0, 30).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') } },
+              { createdAt: { $gte: new Date(Date.now() - 300000) } }
+            ]
+          },
+          { $set: { facebookPostId: result.postId } },
+          { sort: { createdAt: -1 }, new: true }
+        );
+        if (updateRes) updated = true;
+      }
+
+      if (!updated) {
+        await Post.findOneAndUpdate(
+          {},
+          { $set: { facebookPostId: result.postId } },
+          { sort: { createdAt: -1 } }
+        );
+      }
     } catch (err) {
       logger.debug('Could not persist published record:', err.message);
     }

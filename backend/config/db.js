@@ -52,7 +52,8 @@ const connectDB = async () => {
       autoIndex: true,
       maxPoolSize: 10,
       connectTimeoutMS: 10000,
-      socketTimeoutMS: 45000
+      socketTimeoutMS: 45000,
+      family: 4
     };
 
     cached.promise = mongoose.connect(uri, opts).then((m) => {

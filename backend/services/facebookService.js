@@ -160,7 +160,7 @@ class FacebookService {
         response = { data };
       }
 
-      const postId = response.data.id || response.data.post_id;
+      const postId = response.data.post_id || response.data.id;
       logger.info(`Successfully published post to Facebook Page (Post ID: ${postId})`);
 
       return {
@@ -170,6 +170,7 @@ class FacebookService {
         platform: 'Facebook',
         data: {
           id: postId,
+          post_id: response.data.post_id || response.data.id,
           pageId: targetPageId,
           publishedAt: new Date()
         }

@@ -147,13 +147,21 @@ exports.generatePhotocard = asyncHandler(async (req, res) => {
       const existingDuplicate = await Post.findOne({ photocardUrl: uploadResult.secureUrl });
       if (!existingDuplicate) {
         await Post.create({
+          userId: req.user?._id?.toString() || req.body.userId || '',
           userEmail: resolvedUserEmail,
           productName: productName.trim(),
+          category: detectedCategory,
           productDetails: details || (analysis.features ? analysis.features.join(', ') : ''),
           price: price || '',
           discount: discount || '',
           generatedCaption: resolvedCaption,
           photocardUrl: uploadResult.secureUrl,
+          facebookPostId: '',
+          reactionsCount: 0,
+          likesCount: 0,
+          commentsCount: 0,
+          repliesCount: 0,
+          sharesCount: 0,
           metadata: {
             templateId: template.templateId,
             photocardId: photocardRecord?._id

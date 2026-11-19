@@ -1,13 +1,12 @@
-/**
- * OmniMarket AI - Post Model
- * Stores comprehensive AI marketing post information:
- * User reference, product attributes, RAG generated copy, Cloudinary photocard URL, and timestamps.
- */
-
 const mongoose = require('mongoose');
 
 const postSchema = new mongoose.Schema(
   {
+    userId: {
+      type: String,
+      default: '',
+      index: true
+    },
     userEmail: {
       type: String,
       required: [true, 'userEmail is required'],
@@ -17,6 +16,11 @@ const postSchema = new mongoose.Schema(
     productName: {
       type: String,
       required: [true, 'productName is required'],
+      trim: true
+    },
+    category: {
+      type: String,
+      default: '',
       trim: true
     },
     productDetails: {
@@ -40,17 +44,40 @@ const postSchema = new mongoose.Schema(
       type: String,
       default: ''
     },
+    facebookPostId: {
+      type: String,
+      default: ''
+    },
+    reactionsCount: {
+      type: Number,
+      default: 0
+    },
+    likesCount: {
+      type: Number,
+      default: 0
+    },
+    commentsCount: {
+      type: Number,
+      default: 0
+    },
+    repliesCount: {
+      type: Number,
+      default: 0
+    },
+    sharesCount: {
+      type: Number,
+      default: 0
+    },
     metadata: {
       type: mongoose.Schema.Types.Mixed,
       default: {}
     }
   },
   {
-    timestamps: true // Automatically manages createdAt and updatedAt
+    timestamps: true
   }
 );
 
-// Index by userEmail and createdAt descending for quick history retrieval
 postSchema.index({ userEmail: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Post', postSchema);

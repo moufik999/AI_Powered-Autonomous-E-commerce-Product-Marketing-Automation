@@ -8,6 +8,7 @@ const aiService = require('../services/aiService');
 const ragService = require('../services/ragService');
 const facebookService = require('../services/facebookService');
 const MarketingContent = require('../models/MarketingContent');
+const Post = require('../models/Post');
 const mongoose = require('mongoose');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 const { successResponse } = require('../utils/apiResponse');
@@ -132,19 +133,54 @@ exports.publishToSocialMedia = asyncHandler(async (req, res) => {
     imageUrl
   });
 
-  // Save successful publication record
-  try {
-    await MarketingContent.create({
-      user: req.user?._id || null,
-      caption,
-      imageUrl,
-      platform,
-      status: 'published',
-      facebookPostId: publishResult.postId,
-      publishedAt: new Date()
-    });
-  } catch (dbErr) {
-    logger.debug('Failed to record published content in DB:', dbErr.message);
+  if (publishResult.postId) {
+    try {
+      await MarketingContent.create({
+        user: req.user?._id || null,
+        caption,
+        imageUrl,
+        platform,
+        status: 'published',
+        facebookPostId: publishResult.postId,
+        publishedAt: new Date()
+      });
+
+      let updated = false;
+      if (imageUrl && !imageUrl.startsWith('data:image')) {
+        const updateRes = await Post.findOneAndUpdate(
+          { photocardUrl: imageUrl },
+          { $set: { facebookPostId: publishResult.postId } },
+          { sort: { createdAt: -1 }, new: true }
+        );
+        if (updateRes) updated = true;
+      }
+
+      if (!updated && caption) {
+        const lines = caption.split('\n').map(l => l.trim()).filter(Boolean);
+        const firstLine = lines[0] || '';
+        const updateRes = await Post.findOneAndUpdate(
+          {
+            $or: [
+              { generatedCaption: { $regex: new RegExp(firstLine.substring(0, 30).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') } },
+              { createdAt: { $gte: new Date(Date.now() - 300000) } }
+            ]
+          },
+          { $set: { facebookPostId: publishResult.postId } },
+          { sort: { createdAt: -1 }, new: true }
+        );
+        if (updateRes) updated = true;
+      }
+
+      if (!updated) {
+        await Post.findOneAndUpdate(
+          {},
+          { $set: { facebookPostId: publishResult.postId } },
+          { sort: { createdAt: -1 } }
+        );
+      }
+    } catch (dbErr) {
+      logger.debug('Failed to record published content in DB:', dbErr.message);
+    }
   }
 
   // Returns identical response shape expected by existing frontend

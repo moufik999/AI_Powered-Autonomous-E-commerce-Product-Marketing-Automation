@@ -181,6 +181,14 @@ class SharpCompositorService {
           </linearGradient>
         </defs>
 
+        <!-- Brand Logo / Watermark Badge (Amar bazar) -->
+        <g transform="translate(60, 50)">
+          <rect x="0" y="0" width="170" height="38" rx="19" fill="rgba(15, 23, 42, 0.85)" stroke="rgba(255,255,255,0.25)" stroke-width="1.2" filter="drop-shadow(0 4px 10px rgba(0,0,0,0.5))" />
+          <circle cx="20" cy="19" r="9" fill="${colors.accent}" />
+          <text x="20" y="23" font-family="Arial, sans-serif" font-weight="900" font-size="11" fill="#0f172a" text-anchor="middle">A</text>
+          <text x="36" y="24" font-family="Arial, sans-serif" font-weight="800" font-size="14" fill="#ffffff" letter-spacing="1">${this._escapeXml(storeName)}</text>
+        </g>
+
         <!-- Top Category Pill Tag -->
         <g transform="translate(${W / 2}, 65)">
           <rect x="-90" y="-16" width="180" height="32" rx="16" fill="rgba(0,0,0,0.6)" stroke="${colors.accent}" stroke-width="1.5" />
