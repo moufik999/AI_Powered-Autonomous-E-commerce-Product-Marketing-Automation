@@ -1,38 +1,37 @@
-/**
- * OmniMarket AI - Post Service
- * Frontend API client for saving generated posts and fetching post history.
- */
-
 import { request } from './api';
 
 export const postService = {
-  // Save all post info into MongoDB
   savePost: async ({
+    userId,
     userEmail,
     productName,
+    category,
     productDetails,
     price,
     discount,
     generatedCaption,
     photocardUrl,
+    facebookPostId,
     metadata
   }) => {
     return request('/posts', {
       method: 'POST',
       body: JSON.stringify({
+        userId,
         userEmail,
         productName,
+        category,
         productDetails,
         price,
         discount,
         generatedCaption,
         photocardUrl,
+        facebookPostId,
         metadata
       })
     });
   },
 
-  // Get post history for currently logged in user
   getHistory: async (userEmail = '') => {
     const query = userEmail ? `?userEmail=${encodeURIComponent(userEmail)}` : '';
     return request(`/posts/history${query}`, {
@@ -40,11 +39,18 @@ export const postService = {
     });
   },
 
-  // Get total post count
   getCount: async (userEmail = '') => {
     const query = userEmail ? `?userEmail=${encodeURIComponent(userEmail)}` : '';
     return request(`/posts/count${query}`, {
       method: 'GET'
+    });
+  },
+
+  syncInsights: async (postId) => {
+    const timestamp = Date.now();
+    return request(`/ai/posts/${postId}/sync-insights?_t=${timestamp}`, {
+      method: 'GET',
+      cache: 'no-store'
     });
   }
 };

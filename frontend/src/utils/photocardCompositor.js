@@ -219,6 +219,8 @@ function renderTealSpotlightPedestal(ctx, W, H, {
   ctx.fillRect(0, 0, W, H);
 
   // 2. Top-Center Glowing Studio Lamp & Volumetric Spotlight Cone
+  drawBrandWatermark(ctx, 45, 45, storeName, '#2dd4bf');
+
   ctx.save();
   // Volumetric Cone
   const coneGrad = ctx.createRadialGradient(W / 2, 0, 20, W / 2, 540, 520);
@@ -427,6 +429,8 @@ function renderMidnightBlueFloatingPodium(ctx, W, H, {
   ctx.fillRect(0, 0, W, H);
 
   // 2. Top Centered Typography
+  drawBrandWatermark(ctx, 45, 45, storeName, '#60a5fa');
+
   ctx.save();
   ctx.textAlign = 'center';
 
@@ -750,6 +754,44 @@ function drawPillButton(ctx, cx, cy, w, h, text, bgColor, glowColor) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, cx, cy);
+
+  ctx.restore();
+}
+
+// Draw Brand Logo / Watermark Pill Badge
+function drawBrandWatermark(ctx, x, y, storeName, accentColor) {
+  ctx.save();
+  const w = 150;
+  const h = 34;
+  const radius = h / 2;
+
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, radius);
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Mini logo icon circle
+  ctx.fillStyle = accentColor || '#2dd4bf';
+  ctx.beginPath();
+  ctx.arc(x + 18, y + h / 2, 8, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#0f172a';
+  ctx.font = '900 10px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('A', x + 18, y + h / 2 + 1);
+
+  // Store Brand Name Text
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 12px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(storeName || 'Amar bazar', x + 34, y + h / 2);
 
   ctx.restore();
 }

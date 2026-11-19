@@ -232,6 +232,24 @@ const RAGPostGenerator = () => {
     const photocardUrl = photocardResult?.finalImageUrl || imagePreviewUrl || null;
     const result = await publishToFacebook(captionText, 'Facebook', photocardUrl);
     if (result.success) {
+      const fbPostId = result.data?.postId || result.data?.data?.id || result.data?.id;
+      if (fbPostId) {
+        try {
+          await postService.savePost({
+            userEmail: activeUserEmail,
+            productName: productName.trim(),
+            category: category.trim(),
+            productDetails: details.trim(),
+            price: price.trim(),
+            discount: discount.trim(),
+            generatedCaption: captionText,
+            photocardUrl: photocardResult?.finalImageUrl || '',
+            facebookPostId: fbPostId
+          });
+        } catch (e) {
+          console.debug('Failed to sync published post ID to Mongo:', e.message);
+        }
+      }
       alert(`Post and Photocard successfully published to Amar bazar Page live! 🚀`);
     } else {
       alert(`Publishing failed: ${result.message}`);
